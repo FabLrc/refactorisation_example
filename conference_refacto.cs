@@ -21,9 +21,30 @@ namespace ExerciceRefactoring
 {
     // Cette classe fait TOUT : gestion des employés, calcul des salaires,
     // génération de rapports, envoi d'emails, gestion des congés...
+
+    public class Employe
+    {
+        public string Prenom { get; set; }
+        public string Nom { get; set; }
+        public int Age { get; set; }
+        public Adresse Adresse { get; set; }
+        public string Type { get; set; }
+        public double Salaire { get; set; }
+        public string Email { get; set; }
+        public string Telephone { get; set; }
+        public string Departement { get; set; }
+    }
+
+    public class Adresse
+    {
+        public string Rue { get; set; }
+        public string Ville { get; set; }
+        public string CodePostal { get; set; }
+    }
+
     public class GestionnaireEntreprise
     {
-        public List<object[]> employes = new List<object[]>();
+        public List<Employe> employes = new List<Employe>();
 
         // Ajoute un employé avec tous ses paramètres
         // prenom : le prénom de l'employé
@@ -40,20 +61,25 @@ namespace ExerciceRefactoring
             string type, double salaire, string departement,
             string email, string telephone)
         {
-            // On stocke tout dans un tableau d'objets
-            object[] emp = new object[11];
-            emp[0] = prenom;
-            emp[1] = nom;
-            emp[2] = age;
-            emp[3] = rue;
-            emp[4] = ville;
-            emp[5] = codePostal;
-            emp[6] = type;
-            emp[7] = salaire;
-            emp[8] = departement;
-            emp[9] = email;
-            emp[10] = telephone;
-            employes.Add(emp);
+            Employe nouvelEmploye = new Employe
+            {
+                Prenom = prenom,
+                Nom = nom,
+                Age = age,
+                Adresse = new Adresse
+                {
+                    Rue = rue,
+                    Ville = ville,
+                    CodePostal = codePostal
+                },
+                Type = type,
+                Salaire = salaire,
+                Departement = departement,
+                Email = email,
+                Telephone = telephone
+            };
+
+            employes.Add(nouvelEmploye);
         }
 
         // Cette méthode calcule le salaire net d'un employé
@@ -63,12 +89,12 @@ namespace ExerciceRefactoring
             bool avecPrime, bool avecBonus, double tauxHoraire, int heuresSupp)
         {
             // D'abord on cherche l'employé
-            object[] employe = null;
+            Employe employe = null;
             // On parcourt la liste pour trouver l'employé
             for (int i = 0; i < employes.Count; i++)
             {
                 // On vérifie si c'est le bon employé
-                if ((string)employes[i][0] == prenom && (string)employes[i][1] == nom)
+                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
                 {
                     // C'est lui !
                     employe = employes[i];
@@ -84,9 +110,9 @@ namespace ExerciceRefactoring
             }
 
             // On récupère le salaire de base
-            double salaireBase = (double)employe[7];
+            double salaireBase = employe.Salaire;
             // On récupère le type
-            string type = (string)employe[6];
+            string type = employe.Type;
 
             // Variable pour stocker le résultat
             double resultat = 0;
@@ -173,12 +199,12 @@ namespace ExerciceRefactoring
             bool inclureAdresse, bool inclureSalaire, bool inclureConges)
         {
             // D'abord on cherche l'employé
-            object[] employe = null;
+            Employe employe = null;
             // On parcourt la liste pour trouver l'employé
             for (int i = 0; i < employes.Count; i++)
             {
                 // On vérifie si c'est le bon employé
-                if ((string)employes[i][0] == prenom && (string)employes[i][1] == nom)
+                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
                 {
                     // C'est lui !
                     employe = employes[i];
@@ -198,16 +224,16 @@ namespace ExerciceRefactoring
             if (typeRapport == "PDF")
             {
                 rapport = "=== RAPPORT PDF ===\n";
-                rapport = rapport + "Nom: " + (string)employe[1] + "\n";
-                rapport = rapport + "Prénom: " + (string)employe[0] + "\n";
+                rapport = rapport + "Nom: " + employe.Nom + "\n";
+                rapport = rapport + "Prénom: " + employe.Prenom + "\n";
                 if (inclureAdresse)
                 {
-                    rapport = rapport + "Adresse: " + (string)employe[3] + ", ";
-                    rapport = rapport + (string)employe[5] + " " + (string)employe[4] + "\n";
+                    rapport = rapport + "Adresse: " + employe.Adresse.Rue + ", ";
+                    rapport = rapport + employe.Adresse.CodePostal + " " + employe.Adresse.Ville + "\n";
                 }
                 if (inclureSalaire)
                 {
-                    rapport = rapport + "Salaire: " + (double)employe[7] + "€\n";
+                    rapport = rapport + "Salaire: " + employe.Salaire + "€\n";
                 }
                 rapport = rapport + "===================\n";
             }
@@ -215,16 +241,16 @@ namespace ExerciceRefactoring
             {
                 rapport = "<html><body>";
                 rapport = rapport + "<h1>Rapport Employé</h1>";
-                rapport = rapport + "<p>Nom: " + (string)employe[1] + "</p>";
-                rapport = rapport + "<p>Prénom: " + (string)employe[0] + "</p>";
+                rapport = rapport + "<p>Nom: " + employe.Nom + "</p>";
+                rapport = rapport + "<p>Prénom: " + employe.Prenom + "</p>";
                 if (inclureAdresse)
                 {
-                    rapport = rapport + "<p>Adresse: " + (string)employe[3] + ", ";
-                    rapport = rapport + (string)employe[5] + " " + (string)employe[4] + "</p>";
+                    rapport = rapport + "<p>Adresse: " + employe.Adresse.Rue + ", ";
+                    rapport = rapport + employe.Adresse.CodePostal + " " + employe.Adresse.Ville + "</p>";
                 }
                 if (inclureSalaire)
                 {
-                    rapport = rapport + "<p>Salaire: " + (double)employe[7] + "€</p>";
+                    rapport = rapport + "<p>Salaire: " + employe.Salaire + "€</p>";
                 }
                 rapport = rapport + "</body></html>";
             }
@@ -234,34 +260,34 @@ namespace ExerciceRefactoring
                 if (inclureAdresse) rapport = rapport + ";Rue;CP;Ville";
                 if (inclureSalaire) rapport = rapport + ";Salaire";
                 rapport = rapport + "\n";
-                rapport = rapport + (string)employe[1] + ";" + (string)employe[0];
+                rapport = rapport + employe.Nom + ";" + employe.Prenom;
                 if (inclureAdresse)
                 {
-                    rapport = rapport + ";" + (string)employe[3];
-                    rapport = rapport + ";" + (string)employe[5];
-                    rapport = rapport + ";" + (string)employe[4];
+                    rapport = rapport + ";" + employe.Adresse.Rue;
+                    rapport = rapport + ";" + employe.Adresse.CodePostal;
+                    rapport = rapport + ";" + employe.Adresse.Ville;
                 }
                 if (inclureSalaire)
                 {
-                    rapport = rapport + ";" + (double)employe[7];
+                    rapport = rapport + ";" + employe.Salaire;
                 }
             }
             else if (typeRapport == "JSON")
             {
                 rapport = "{\n";
-                rapport = rapport + "  \"nom\": \"" + (string)employe[1] + "\",\n";
-                rapport = rapport + "  \"prenom\": \"" + (string)employe[0] + "\"";
+                rapport = rapport + "  \"nom\": \"" + employe.Nom + "\",\n";
+                rapport = rapport + "  \"prenom\": \"" + employe.Prenom + "\"";
                 if (inclureAdresse)
                 {
                     rapport = rapport + ",\n  \"adresse\": {\n";
-                    rapport = rapport + "    \"rue\": \"" + (string)employe[3] + "\",\n";
-                    rapport = rapport + "    \"cp\": \"" + (string)employe[5] + "\",\n";
-                    rapport = rapport + "    \"ville\": \"" + (string)employe[4] + "\"\n";
+                    rapport = rapport + "    \"rue\": \"" + employe.Adresse.Rue + "\",\n";
+                    rapport = rapport + "    \"cp\": \"" + employe.Adresse.CodePostal + "\",\n";
+                    rapport = rapport + "    \"ville\": \"" + employe.Adresse.Ville + "\"\n";
                     rapport = rapport + "  }";
                 }
                 if (inclureSalaire)
                 {
-                    rapport = rapport + ",\n  \"salaire\": " + (double)employe[7];
+                    rapport = rapport + ",\n  \"salaire\": " + employe.Salaire;
                 }
                 rapport = rapport + "\n}";
             }
@@ -274,12 +300,12 @@ namespace ExerciceRefactoring
             bool avecCopie, string emailCopie, bool urgent, bool accuseReception)
         {
             // D'abord on cherche l'employé
-            object[] employe = null;
+            Employe employe = null;
             // On parcourt la liste pour trouver l'employé
             for (int i = 0; i < employes.Count; i++)
             {
                 // On vérifie si c'est le bon employé
-                if ((string)employes[i][0] == prenom && (string)employes[i][1] == nom)
+                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
                 {
                     // C'est lui !
                     employe = employes[i];
@@ -294,7 +320,7 @@ namespace ExerciceRefactoring
             }
 
             // On récupère l'email
-            string email = (string)employe[9];
+            string email = employe.Email;
 
             // On construit l'email
             Console.WriteLine("Envoi email à: " + email);
@@ -318,12 +344,12 @@ namespace ExerciceRefactoring
         public int CalculerCongesRestants(string prenom, string nom, int annee)
         {
             // D'abord on cherche l'employé
-            object[] employe = null;
+            Employe employe = null;
             // On parcourt la liste pour trouver l'employé
             for (int i = 0; i < employes.Count; i++)
             {
                 // On vérifie si c'est le bon employé
-                if ((string)employes[i][0] == prenom && (string)employes[i][1] == nom)
+                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
                 {
                     // C'est lui !
                     employe = employes[i];
@@ -333,7 +359,7 @@ namespace ExerciceRefactoring
 
             if (employe == null) return 0;
 
-            string type = (string)employe[6];
+            string type = employe.Type;
             int conges = 0;
 
             // Selon le type
