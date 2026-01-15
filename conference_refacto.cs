@@ -46,6 +46,9 @@ namespace ExerciceRefactoring
         public required string Email { get; set; }
         public required string Telephone { get; set; }
         public required string Departement { get; set; }
+
+        private IContratStrategy? _contrat;
+        public IContratStrategy Contrat => _contrat ??= ContratFactory.CreerContrat(TypeContrat);
     }
 
     public class Adresse
@@ -53,6 +56,121 @@ namespace ExerciceRefactoring
         public required string Rue { get; set; }
         public required string Ville { get; set; }
         public required string CodePostal { get; set; }
+    }
+
+    public interface IContratStrategy
+    {
+        double CalculerSalaireNet(double salaireBase, double tauxHoraire, int heuresSupp, bool avecPrime, bool avecBonus);
+        int GetCongesAnnuels();
+        string GetNomContrat();
+    }
+
+    public class ContratCDI : IContratStrategy
+    {
+        private const double Charges = 0.23;
+        private const double TauxPrime = 0.10;
+        private const double Bonus = 500;
+        private const double MajorationHeuresSupp = 1.25;
+
+        public double CalculerSalaireNet(double salaireBase, double tauxHoraire, int heuresSupp, bool avecPrime, bool avecBonus)
+        {
+            double resultat = salaireBase - (salaireBase * Charges);
+
+            if (heuresSupp > 0)
+            {
+                resultat += heuresSupp * tauxHoraire * MajorationHeuresSupp;
+            }
+            if (avecPrime)
+            {
+                resultat += salaireBase * TauxPrime;
+            }
+            if (avecBonus)
+            {
+                resultat += Bonus;
+            }
+
+            return resultat;
+        }
+
+        public int GetCongesAnnuels() => 25;
+        public string GetNomContrat() => "CDI";
+    }
+
+    public class ContratCDD : IContratStrategy
+    {
+        private const double Charges = 0.20;
+        private const double TauxPrime = 0.08;
+        private const double MajorationHeuresSupp = 1.25;
+
+        public double CalculerSalaireNet(double salaireBase, double tauxHoraire, int heuresSupp, bool avecPrime, bool avecBonus)
+        {
+            double resultat = salaireBase - (salaireBase * Charges);
+
+            if (heuresSupp > 0)
+            {
+                resultat += heuresSupp * tauxHoraire * MajorationHeuresSupp;
+            }
+            if (avecPrime)
+            {
+                resultat += salaireBase * TauxPrime;
+            }
+
+            return resultat;
+        }
+
+        public int GetCongesAnnuels() => 20;
+        public string GetNomContrat() => "CDD";
+    }
+
+    public class ContratStagiaire : IContratStrategy
+    {
+        public double CalculerSalaireNet(double salaireBase, double tauxHoraire, int heuresSupp, bool avecPrime, bool avecBonus)
+        {
+            return salaireBase;
+        }
+
+        public int GetCongesAnnuels() => 0;
+        public string GetNomContrat() => "Stagiaire";
+    }
+
+    public class ContratFreelance : IContratStrategy
+    {
+        private const double Bonus = 1000;
+
+        public double CalculerSalaireNet(double salaireBase, double tauxHoraire, int heuresSupp, bool avecPrime, bool avecBonus)
+        {
+            double resultat = salaireBase;
+
+            if (heuresSupp > 0)
+            {
+                resultat += heuresSupp * tauxHoraire;
+            }
+            if (avecBonus)
+            {
+                resultat += Bonus;
+            }
+
+            return resultat;
+        }
+
+        public int GetCongesAnnuels() => 0;
+        public string GetNomContrat() => "Freelance";
+    }
+
+    // ========== FACTORY - Création des contrats ==========
+    public static class ContratFactory
+    {
+        public static IContratStrategy CreerContrat(string typeContrat)
+        {
+            return typeContrat switch
+            {
+                "CDI" => new ContratCDI(),
+                "CDD" => new ContratCDD(),
+                "Stagiaire" => new ContratStagiaire(),
+                "Freelance" => new ContratFreelance(),
+                _ => throw new ArgumentException($"Type de contrat inconnu: {typeContrat}")
+            };
+        }
     }
 
     public class EmployeRepository
@@ -81,69 +199,10 @@ namespace ExerciceRefactoring
 
     public class SalaireCalculateur
     {
-        private const double ChargesCdi = 0.23;
-        private const double ChargesCdd = 0.20;
-        private const double PrimeCdi = 0.10;
-        private const double PrimeCdd = 0.08;
-        private const double BonusCdi = 500;
-        private const double BonusFreelance = 1000;
-        private const double MajorationHeuresSupp = 1.25;
-
         public double CalculerSalaireNet(Employe employe, int mois, int annee,
             bool avecPrime, bool avecBonus, double tauxHoraire, int heuresSupp)
         {
-            double salaireBase = employe.Salaire;
-            string typeContrat = employe.TypeContrat;
-            double resultat = 0;
-
-            if (typeContrat == "CDI")
-            {
-                resultat = salaireBase;
-                resultat = resultat - (resultat * ChargesCdi);
-                if (heuresSupp > 0)
-                {
-                    resultat = resultat + (heuresSupp * tauxHoraire * MajorationHeuresSupp);
-                }
-                if (avecPrime)
-                {
-                    resultat = resultat + (salaireBase * PrimeCdi);
-                }
-                if (avecBonus)
-                {
-                    resultat = resultat + BonusCdi;
-                }
-            }
-            else if (typeContrat == "CDD")
-            {
-                resultat = salaireBase;
-                resultat = resultat - (resultat * ChargesCdd);
-                if (heuresSupp > 0)
-                {
-                    resultat = resultat + (heuresSupp * tauxHoraire * MajorationHeuresSupp);
-                }
-                if (avecPrime)
-                {
-                    resultat = resultat + (salaireBase * PrimeCdd);
-                }
-            }
-            else if (typeContrat == "Stagiaire")
-            {
-                resultat = salaireBase;
-            }
-            else if (typeContrat == "Freelance")
-            {
-                resultat = salaireBase;
-                if (heuresSupp > 0)
-                {
-                    resultat = resultat + (heuresSupp * tauxHoraire);
-                }
-                if (avecBonus)
-                {
-                    resultat = resultat + BonusFreelance;
-                }
-            }
-
-            return resultat;
+            return employe.Contrat.CalculerSalaireNet(employe.Salaire, tauxHoraire, heuresSupp, avecPrime, avecBonus);
         }
     }
 
@@ -261,27 +320,7 @@ namespace ExerciceRefactoring
     {
         public int CalculerCongesRestants(Employe employe, int annee)
         {
-            string typeContrat = employe.TypeContrat;
-            int conges = 0;
-
-            if (typeContrat == "CDI")
-            {
-                conges = 25;
-            }
-            else if (typeContrat == "CDD")
-            {
-                conges = 20;
-            }
-            else if (typeContrat == "Stagiaire")
-            {
-                conges = 0;
-            }
-            else if (typeContrat == "Freelance")
-            {
-                conges = 0;
-            }
-
-            return conges;
+            return employe.Contrat.GetCongesAnnuels();
         }
     }
 
