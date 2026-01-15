@@ -43,6 +43,24 @@ namespace ExerciceRefactoring
     {
         public List<Employe> employes = new List<Employe>();
 
+        private const string TypeCdi = "CDI";
+        private const string TypeCdd = "CDD";
+        private const string TypeStagiaire = "Stagiaire";
+        private const string TypeFreelance = "Freelance";
+
+        private const double ChargesCdi = 0.23;
+        private const double ChargesCdd = 0.20;
+        private const double PrimeCdi = 0.10;
+        private const double PrimeCdd = 0.08;
+        private const double BonusCdi = 500;
+        private const double BonusFreelance = 1000;
+        private const double MajorationHeuresSupp = 1.25;
+
+        private const string RapportPdf = "PDF";
+        private const string RapportHtml = "HTML";
+        private const string RapportCsv = "CSV";
+        private const string RapportJson = "JSON";
+
         public Employe? RechercherEmploye(string prenom, string nom)
         {
             for (int i = 0; i < employes.Count; i++)
@@ -55,117 +73,72 @@ namespace ExerciceRefactoring
 
             return null;
         }
-
-        // Ajoute un employé avec tous ses paramètres
-        // prenom : le prénom de l'employé
-        // nom : le nom de l'employé
-        // age : l'âge de l'employé
-        // rue : la rue de l'adresse
-        // ville : la ville de l'adresse
-        // codePostal : le code postal
-        // typeContrat : le type d'employé (CDI, CDD, Stagiaire, Freelance)
-        // salaire : le salaire de base
-        // departement : le département
         public void AjouterEmploye(Employe employe)
         {
             employes.Add(employe);
         }
 
-        // Cette méthode calcule le salaire net d'un employé
-        // Elle prend en compte le type d'employé, les primes, les taxes
-        // Et plein d'autres trucs compliqués
         public double CalculerSalaireNet(string prenom, string nom, int mois, int annee,
             bool avecPrime, bool avecBonus, double tauxHoraire, int heuresSupp)
         {
             
             Employe employe = RechercherEmploye(prenom, nom);
 
-            // On récupère le salaire de base
             double salaireBase = employe.Salaire;
-            // On récupère le type
-            string typeContrat = employe.TypeContrat;
+            TypeContrat typeContrat = employe.TypeContrat;
 
-            // Variable pour stocker le résultat
             double resultat = 0;
 
-            // On calcule selon le type d'employé
-            if (typeContrat == "CDI")
+            if (typeContrat == TypeContrat.CDI)
             {
-                // Pour les CDI, on applique les charges patronales de 23%
                 resultat = salaireBase;
-                // On retire les charges
-                resultat = resultat - (resultat * 0.23);
-                // On ajoute les heures supp si il y en a
+                resultat = resultat - (resultat * ChargesCdi);
                 if (heuresSupp > 0)
                 {
-                    // Les heures supp sont majorées de 25%
-                    resultat = resultat + (heuresSupp * tauxHoraire * 1.25);
+                    resultat = resultat + (heuresSupp * tauxHoraire * MajorationHeuresSupp);
                 }
-                // On ajoute la prime si demandé
                 if (avecPrime)
                 {
-                    // Prime de 10% du salaire
-                    resultat = resultat + (salaireBase * 0.10);
+                    resultat = resultat + (salaireBase * PrimeCdi);
                 }
-                // On ajoute le bonus si demandé
                 if (avecBonus)
                 {
-                    // Bonus fixe de 500€
-                    resultat = resultat + 500;
+                    resultat = resultat + BonusCdi;
                 }
             }
-            else if (typeContrat == "CDD")
+            else if (typeContrat == TypeContrat.CDD)
             {
-                // Pour les CDD, charges de 20%
                 resultat = salaireBase;
-                // On retire les charges
-                resultat = resultat - (resultat * 0.20);
-                // On ajoute les heures supp si il y en a
+                resultat = resultat - (resultat * ChargesCdd);
                 if (heuresSupp > 0)
                 {
-                    // Les heures supp sont majorées de 25%
-                    resultat = resultat + (heuresSupp * tauxHoraire * 1.25);
+                    resultat = resultat + (heuresSupp * tauxHoraire * MajorationHeuresSupp);
                 }
-                // On ajoute la prime si demandé
                 if (avecPrime)
                 {
-                    // Prime de 8% du salaire pour les CDD
-                    resultat = resultat + (salaireBase * 0.08);
+                    resultat = resultat + (salaireBase * PrimeCdd);
                 }
-                // Pas de bonus pour les CDD
             }
-            else if (typeContrat == "Stagiaire")
+            else if (typeContrat == TypeContrat.Stagiaire)
             {
-                // Les stagiaires ont une gratification fixe
                 resultat = salaireBase;
-                // Pas de charges pour les stagiaires
-                // Pas d'heures supp
-                // Pas de prime
-                // Pas de bonus
             }
-            else if (typeContrat == "Freelance")
+            else if (typeContrat == TypeContrat.Freelance)
             {
-                // Les freelances sont payés à la journée
                 resultat = salaireBase;
-                // On ajoute les heures supp si il y en a
                 if (heuresSupp > 0)
                 {
-                    // Pas de majoration pour les freelances
                     resultat = resultat + (heuresSupp * tauxHoraire);
                 }
-                // On ajoute le bonus si demandé
                 if (avecBonus)
                 {
-                    // Bonus de 1000€ pour les freelances
-                    resultat = resultat + 1000;
+                    resultat = resultat + BonusFreelance;
                 }
             }
 
-            // On retourne le résultat
             return resultat;
         }
 
-        // Génère un rapport pour un employé
         public string GenererRapport(string prenom, string nom, string typeRapport,
             bool inclureAdresse, bool inclureSalaire, bool inclureConges)
         {
@@ -175,8 +148,7 @@ namespace ExerciceRefactoring
 
             string rapport = "";
 
-            // Selon le type de rapport
-            if (typeRapport == "PDF")
+            if (typeRapport == RapportPdf)
             {
                 rapport = "=== RAPPORT PDF ===\n";
                 rapport = rapport + "Nom: " + employe.Nom + "\n";
@@ -192,7 +164,7 @@ namespace ExerciceRefactoring
                 }
                 rapport = rapport + "===================\n";
             }
-            else if (typeRapport == "HTML")
+            else if (typeRapport == RapportHtml)
             {
                 rapport = "<html><body>";
                 rapport = rapport + "<h1>Rapport Employé</h1>";
@@ -209,7 +181,7 @@ namespace ExerciceRefactoring
                 }
                 rapport = rapport + "</body></html>";
             }
-            else if (typeRapport == "CSV")
+            else if (typeRapport == RapportCsv)
             {
                 rapport = "Nom;Prénom";
                 if (inclureAdresse) rapport = rapport + ";Rue;CP;Ville";
@@ -227,7 +199,7 @@ namespace ExerciceRefactoring
                     rapport = rapport + ";" + employe.Salaire;
                 }
             }
-            else if (typeRapport == "JSON")
+            else if (typeRapport == RapportJson)
             {
                 rapport = "{\n";
                 rapport = rapport + "  \"nom\": \"" + employe.Nom + "\",\n";
@@ -250,7 +222,6 @@ namespace ExerciceRefactoring
             return rapport;
         }
 
-        // Envoie un email à l'employé
         public void EnvoyerEmail(string prenom, string nom, string sujet, string corps,
             bool avecCopie, string emailCopie, bool urgent, bool accuseReception)
         {
@@ -262,10 +233,8 @@ namespace ExerciceRefactoring
                 return;
             }
 
-            // On récupère l'email
             string email = employe.Email;
 
-            // On construit l'email
             Console.WriteLine("Envoi email à: " + email);
             Console.WriteLine("Sujet: " + sujet);
             Console.WriteLine("Corps: " + corps);
@@ -283,7 +252,6 @@ namespace ExerciceRefactoring
             }
         }
 
-        // Calcule les congés restants
         public int CalculerCongesRestants(string prenom, string nom, int annee)
         {
             Employe employe = RechercherEmploye(prenom, nom);
@@ -293,28 +261,26 @@ namespace ExerciceRefactoring
             string typeContrat = employe.TypeContrat;
             int conges = 0;
 
-            // Selon le type
             if (typeContrat == "CDI")
             {
-                conges = 25; // 25 jours pour les CDI
+                conges = 25; 
             }
             else if (typeContrat == "CDD")
             {
-                conges = 20; // 20 jours pour les CDD
+                conges = 20; 
             }
             else if (typeContrat == "Stagiaire")
             {
-                conges = 0; // Pas de congés pour les stagiaires
+                conges = 0; 
             }
             else if (typeContrat == "Freelance")
             {
-                conges = 0; // Pas de congés pour les freelances
+                conges = 0; 
             }
 
             return conges;
         }
 
-        // Affiche les infos d'un employé en utilisant trop les données d'autres objets
         public void AfficherInfosEmploye(AutreClasse autre)
         {
             // Feature Envy : on utilise énormément les données de AutreClasse
@@ -326,7 +292,6 @@ namespace ExerciceRefactoring
             Console.WriteLine("Directeur: " + autre.prenomDirecteur + " " + autre.nomDirecteur);
             Console.WriteLine("Contact: " + autre.emailEntreprise + " / " + autre.telEntreprise);
 
-            // Calcul fait avec les données de l'autre classe
             double tauxTVA = autre.capital > 1000000 ? 0.20 : 0.10;
             Console.WriteLine("Taux TVA applicable: " + (tauxTVA * 100) + "%");
         }
@@ -357,7 +322,6 @@ namespace ExerciceRefactoring
         {
             GestionnaireEntreprise gestionnaire = new GestionnaireEntreprise();
 
-            // Ajout d'employés via objet Employe
             gestionnaire.AjouterEmploye(new Employe
             {
                 Prenom = "Jean",
