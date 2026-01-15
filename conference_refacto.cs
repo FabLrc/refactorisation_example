@@ -19,32 +19,42 @@ using System.Collections.Generic;
 
 namespace ExerciceRefactoring
 {
-    // Cette classe fait TOUT : gestion des employés, calcul des salaires,
-    // génération de rapports, envoi d'emails, gestion des congés...
-
     public class Employe
     {
-        public string Prenom { get; set; }
-        public string Nom { get; set; }
-        public int Age { get; set; }
-        public Adresse Adresse { get; set; }
-        public string Type { get; set; }
-        public double Salaire { get; set; }
-        public string Email { get; set; }
-        public string Telephone { get; set; }
-        public string Departement { get; set; }
+        public required string Prenom { get; set; }
+        public required string Nom { get; set; }
+        public required int Age { get; set; }
+        public required Adresse Adresse { get; set; }
+        public required string TypeContrat { get; set; }
+        public required double Salaire { get; set; }
+        public required string Email { get; set; }
+        public required string Telephone { get; set; }
+        public required string Departement { get; set; }
     }
 
     public class Adresse
     {
-        public string Rue { get; set; }
-        public string Ville { get; set; }
-        public string CodePostal { get; set; }
+        public required string Rue { get; set; }
+        public required string Ville { get; set; }
+        public required string CodePostal { get; set; }
     }
 
     public class GestionnaireEntreprise
     {
         public List<Employe> employes = new List<Employe>();
+
+        public Employe? RechercherEmploye(string prenom, string nom)
+        {
+            for (int i = 0; i < employes.Count; i++)
+            {
+                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
+                {
+                    return employes[i];
+                }
+            }
+
+            return null;
+        }
 
         // Ajoute un employé avec tous ses paramètres
         // prenom : le prénom de l'employé
@@ -53,12 +63,12 @@ namespace ExerciceRefactoring
         // rue : la rue de l'adresse
         // ville : la ville de l'adresse
         // codePostal : le code postal
-        // type : le type d'employé (CDI, CDD, Stagiaire, Freelance)
+        // typeContrat : le type d'employé (CDI, CDD, Stagiaire, Freelance)
         // salaire : le salaire de base
         // departement : le département
         public void AjouterEmploye(string prenom, string nom, int age,
             string rue, string ville, string codePostal,
-            string type, double salaire, string departement,
+            string typeContrat, double salaire, string departement,
             string email, string telephone)
         {
             Employe nouvelEmploye = new Employe
@@ -72,7 +82,7 @@ namespace ExerciceRefactoring
                     Ville = ville,
                     CodePostal = codePostal
                 },
-                Type = type,
+                TypeContrat = typeContrat,
                 Salaire = salaire,
                 Departement = departement,
                 Email = email,
@@ -88,37 +98,19 @@ namespace ExerciceRefactoring
         public double CalculerSalaireNet(string prenom, string nom, int mois, int annee,
             bool avecPrime, bool avecBonus, double tauxHoraire, int heuresSupp)
         {
-            // D'abord on cherche l'employé
-            Employe employe = null;
-            // On parcourt la liste pour trouver l'employé
-            for (int i = 0; i < employes.Count; i++)
-            {
-                // On vérifie si c'est le bon employé
-                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
-                {
-                    // C'est lui !
-                    employe = employes[i];
-                    break;
-                }
-            }
-
-            // Si on n'a pas trouvé l'employé
-            if (employe == null)
-            {
-                // On retourne 0
-                return 0;
-            }
+            
+            Employe employe = RechercherEmploye(prenom, nom);
 
             // On récupère le salaire de base
             double salaireBase = employe.Salaire;
             // On récupère le type
-            string type = employe.Type;
+            string typeContrat = employe.TypeContrat;
 
             // Variable pour stocker le résultat
             double resultat = 0;
 
             // On calcule selon le type d'employé
-            if (type == "CDI")
+            if (typeContrat == "CDI")
             {
                 // Pour les CDI, on applique les charges patronales de 23%
                 resultat = salaireBase;
@@ -143,7 +135,7 @@ namespace ExerciceRefactoring
                     resultat = resultat + 500;
                 }
             }
-            else if (type == "CDD")
+            else if (typeContrat == "CDD")
             {
                 // Pour les CDD, charges de 20%
                 resultat = salaireBase;
@@ -163,7 +155,7 @@ namespace ExerciceRefactoring
                 }
                 // Pas de bonus pour les CDD
             }
-            else if (type == "Stagiaire")
+            else if (typeContrat == "Stagiaire")
             {
                 // Les stagiaires ont une gratification fixe
                 resultat = salaireBase;
@@ -172,7 +164,7 @@ namespace ExerciceRefactoring
                 // Pas de prime
                 // Pas de bonus
             }
-            else if (type == "Freelance")
+            else if (typeContrat == "Freelance")
             {
                 // Les freelances sont payés à la journée
                 resultat = salaireBase;
@@ -198,25 +190,9 @@ namespace ExerciceRefactoring
         public string GenererRapport(string prenom, string nom, string typeRapport,
             bool inclureAdresse, bool inclureSalaire, bool inclureConges)
         {
-            // D'abord on cherche l'employé
-            Employe employe = null;
-            // On parcourt la liste pour trouver l'employé
-            for (int i = 0; i < employes.Count; i++)
-            {
-                // On vérifie si c'est le bon employé
-                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
-                {
-                    // C'est lui !
-                    employe = employes[i];
-                    break;
-                }
-            }
+            Employe employe = RechercherEmploye(prenom, nom);
 
-            // Si on n'a pas trouvé
-            if (employe == null)
-            {
-                return "Employé non trouvé";
-            }
+            if (employe == null) return "Employé non trouvé";
 
             string rapport = "";
 
@@ -299,19 +275,7 @@ namespace ExerciceRefactoring
         public void EnvoyerEmail(string prenom, string nom, string sujet, string corps,
             bool avecCopie, string emailCopie, bool urgent, bool accuseReception)
         {
-            // D'abord on cherche l'employé
-            Employe employe = null;
-            // On parcourt la liste pour trouver l'employé
-            for (int i = 0; i < employes.Count; i++)
-            {
-                // On vérifie si c'est le bon employé
-                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
-                {
-                    // C'est lui !
-                    employe = employes[i];
-                    break;
-                }
-            }
+            Employe employe = RechercherEmploye(prenom, nom);
 
             if (employe == null)
             {
@@ -343,39 +307,27 @@ namespace ExerciceRefactoring
         // Calcule les congés restants
         public int CalculerCongesRestants(string prenom, string nom, int annee)
         {
-            // D'abord on cherche l'employé
-            Employe employe = null;
-            // On parcourt la liste pour trouver l'employé
-            for (int i = 0; i < employes.Count; i++)
-            {
-                // On vérifie si c'est le bon employé
-                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
-                {
-                    // C'est lui !
-                    employe = employes[i];
-                    break;
-                }
-            }
+            Employe employe = RechercherEmploye(prenom, nom);
 
             if (employe == null) return 0;
 
-            string type = employe.Type;
+            string typeContrat = employe.TypeContrat;
             int conges = 0;
 
             // Selon le type
-            if (type == "CDI")
+            if (typeContrat == "CDI")
             {
                 conges = 25; // 25 jours pour les CDI
             }
-            else if (type == "CDD")
+            else if (typeContrat == "CDD")
             {
                 conges = 20; // 20 jours pour les CDD
             }
-            else if (type == "Stagiaire")
+            else if (typeContrat == "Stagiaire")
             {
                 conges = 0; // Pas de congés pour les stagiaires
             }
-            else if (type == "Freelance")
+            else if (typeContrat == "Freelance")
             {
                 conges = 0; // Pas de congés pour les freelances
             }
@@ -405,18 +357,18 @@ namespace ExerciceRefactoring
     public class AutreClasse
     {
         // Données de l'entreprise qui devraient être regroupées
-        public string nomEntreprise;
-        public string rueEntreprise;
-        public string cpEntreprise;
-        public string villeEntreprise;
-        public string siret;
+        public required string nomEntreprise;
+        public required string rueEntreprise;
+        public required string cpEntreprise;
+        public required string villeEntreprise;
+        public required string siret;
         public double capital;
 
         // Données du directeur qui devraient être regroupées
-        public string prenomDirecteur;
-        public string nomDirecteur;
-        public string emailEntreprise;
-        public string telEntreprise;
+        public required string prenomDirecteur;
+        public required string nomDirecteur;
+        public required string emailEntreprise;
+        public required string telEntreprise;
     }
 
     // Classe de test
