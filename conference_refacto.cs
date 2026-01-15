@@ -66,30 +66,9 @@ namespace ExerciceRefactoring
         // typeContrat : le type d'employé (CDI, CDD, Stagiaire, Freelance)
         // salaire : le salaire de base
         // departement : le département
-        public void AjouterEmploye(string prenom, string nom, int age,
-            string rue, string ville, string codePostal,
-            string typeContrat, double salaire, string departement,
-            string email, string telephone)
+        public void AjouterEmploye(Employe employe)
         {
-            Employe nouvelEmploye = new Employe
-            {
-                Prenom = prenom,
-                Nom = nom,
-                Age = age,
-                Adresse = new Adresse
-                {
-                    Rue = rue,
-                    Ville = ville,
-                    CodePostal = codePostal
-                },
-                TypeContrat = typeContrat,
-                Salaire = salaire,
-                Departement = departement,
-                Email = email,
-                Telephone = telephone
-            };
-
-            employes.Add(nouvelEmploye);
+            employes.Add(employe);
         }
 
         // Cette méthode calcule le salaire net d'un employé
@@ -378,16 +357,32 @@ namespace ExerciceRefactoring
         {
             GestionnaireEntreprise gestionnaire = new GestionnaireEntreprise();
 
-            // Ajout d'employés avec trop de paramètres
-            gestionnaire.AjouterEmploye("Jean", "Dupont", 35,
-                "12 rue de la Paix", "Paris", "75001",
-                "CDI", 3500.0, "Informatique",
-                "jean.dupont@mail.com", "0612345678");
+            // Ajout d'employés via objet Employe
+            gestionnaire.AjouterEmploye(new Employe
+            {
+                Prenom = "Jean",
+                Nom = "Dupont",
+                Age = 35,
+                Adresse = new Adresse { Rue = "12 rue de la Paix", Ville = "Paris", CodePostal = "75001" },
+                TypeContrat = "CDI",
+                Salaire = 3500.0,
+                Departement = "Informatique",
+                Email = "jean.dupont@mail.com",
+                Telephone = "0612345678"
+            });
 
-            gestionnaire.AjouterEmploye("Marie", "Martin", 28,
-                "5 avenue des Champs", "Lyon", "69001",
-                "CDD", 2800.0, "Marketing",
-                "marie.martin@mail.com", "0698765432");
+            gestionnaire.AjouterEmploye(new Employe
+            {
+                Prenom = "Marie",
+                Nom = "Martin",
+                Age = 28,
+                Adresse = new Adresse { Rue = "5 avenue des Champs", Ville = "Lyon", CodePostal = "69001" },
+                TypeContrat = "CDD",
+                Salaire = 2800.0,
+                Departement = "Marketing",
+                Email = "marie.martin@mail.com",
+                Telephone = "0698765432"
+            });
 
             // Calcul de salaire avec trop de paramètres
             double salaire = gestionnaire.CalculerSalaireNet("Jean", "Dupont",
