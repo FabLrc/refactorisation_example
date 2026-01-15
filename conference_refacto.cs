@@ -13,6 +13,22 @@
 //
 // OBJECTIF : Refactoriser ce code en appliquant les principes Clean Code
 // ============================================================================
+//
+// Notes personnelles :
+// 
+// Convention de nommage C# :
+//      _nomVariablePrivée = champ privé
+//      nomVariableLocale = variable locale
+//      NomPropriete = propriété publique
+//
+// Architecture :
+//
+// GestionnaireEntreprise 
+//    ├── EmployeRepository
+//    ├── SalaireCalculateur
+//    ├── RapportGenerateur
+//    ├── EmailService
+//    └── CongesService
 
 using System;
 using System.Collections.Generic;
@@ -39,15 +55,32 @@ namespace ExerciceRefactoring
         public required string CodePostal { get; set; }
     }
 
-    public class GestionnaireEntreprise
+    public class EmployeRepository
     {
-        public List<Employe> employes = new List<Employe>();
+        private readonly List<Employe> _employes = new List<Employe>();
 
-        private const string TypeCdi = "CDI";
-        private const string TypeCdd = "CDD";
-        private const string TypeStagiaire = "Stagiaire";
-        private const string TypeFreelance = "Freelance";
+        public void Ajouter(Employe employe)
+        {
+            _employes.Add(employe);
+        }
 
+        public Employe? Rechercher(string prenom, string nom)
+        {
+            for (int i = 0; i < _employes.Count; i++)
+            {
+                if (_employes[i].Prenom == prenom && _employes[i].Nom == nom)
+                {
+                    return _employes[i];
+                }
+            }
+            return null;
+        }
+
+        public IReadOnlyList<Employe> GetAll() => _employes.AsReadOnly();
+    }
+
+    public class SalaireCalculateur
+    {
         private const double ChargesCdi = 0.23;
         private const double ChargesCdd = 0.20;
         private const double PrimeCdi = 0.10;
@@ -56,40 +89,14 @@ namespace ExerciceRefactoring
         private const double BonusFreelance = 1000;
         private const double MajorationHeuresSupp = 1.25;
 
-        private const string RapportPdf = "PDF";
-        private const string RapportHtml = "HTML";
-        private const string RapportCsv = "CSV";
-        private const string RapportJson = "JSON";
-
-        public Employe? RechercherEmploye(string prenom, string nom)
-        {
-            for (int i = 0; i < employes.Count; i++)
-            {
-                if (employes[i].Prenom == prenom && employes[i].Nom == nom)
-                {
-                    return employes[i];
-                }
-            }
-
-            return null;
-        }
-        public void AjouterEmploye(Employe employe)
-        {
-            employes.Add(employe);
-        }
-
-        public double CalculerSalaireNet(string prenom, string nom, int mois, int annee,
+        public double CalculerSalaireNet(Employe employe, int mois, int annee,
             bool avecPrime, bool avecBonus, double tauxHoraire, int heuresSupp)
         {
-            
-            Employe employe = RechercherEmploye(prenom, nom);
-
             double salaireBase = employe.Salaire;
-            TypeContrat typeContrat = employe.TypeContrat;
-
+            string typeContrat = employe.TypeContrat;
             double resultat = 0;
 
-            if (typeContrat == TypeContrat.CDI)
+            if (typeContrat == "CDI")
             {
                 resultat = salaireBase;
                 resultat = resultat - (resultat * ChargesCdi);
@@ -106,7 +113,7 @@ namespace ExerciceRefactoring
                     resultat = resultat + BonusCdi;
                 }
             }
-            else if (typeContrat == TypeContrat.CDD)
+            else if (typeContrat == "CDD")
             {
                 resultat = salaireBase;
                 resultat = resultat - (resultat * ChargesCdd);
@@ -119,11 +126,11 @@ namespace ExerciceRefactoring
                     resultat = resultat + (salaireBase * PrimeCdd);
                 }
             }
-            else if (typeContrat == TypeContrat.Stagiaire)
+            else if (typeContrat == "Stagiaire")
             {
                 resultat = salaireBase;
             }
-            else if (typeContrat == TypeContrat.Freelance)
+            else if (typeContrat == "Freelance")
             {
                 resultat = salaireBase;
                 if (heuresSupp > 0)
@@ -138,14 +145,18 @@ namespace ExerciceRefactoring
 
             return resultat;
         }
+    }
 
-        public string GenererRapport(string prenom, string nom, string typeRapport,
+    public class RapportGenerateur
+    {
+        private const string RapportPdf = "PDF";
+        private const string RapportHtml = "HTML";
+        private const string RapportCsv = "CSV";
+        private const string RapportJson = "JSON";
+
+        public string Generer(Employe employe, string typeRapport,
             bool inclureAdresse, bool inclureSalaire, bool inclureConges)
         {
-            Employe employe = RechercherEmploye(prenom, nom);
-
-            if (employe == null) return "Employé non trouvé";
-
             string rapport = "";
 
             if (typeRapport == RapportPdf)
@@ -221,21 +232,14 @@ namespace ExerciceRefactoring
 
             return rapport;
         }
+    }
 
-        public void EnvoyerEmail(string prenom, string nom, string sujet, string corps,
+    public class EmailService
+    {
+        public void Envoyer(Employe employe, string sujet, string corps,
             bool avecCopie, string emailCopie, bool urgent, bool accuseReception)
         {
-            Employe employe = RechercherEmploye(prenom, nom);
-
-            if (employe == null)
-            {
-                Console.WriteLine("Employé non trouvé");
-                return;
-            }
-
-            string email = employe.Email;
-
-            Console.WriteLine("Envoi email à: " + email);
+            Console.WriteLine("Envoi email à: " + employe.Email);
             Console.WriteLine("Sujet: " + sujet);
             Console.WriteLine("Corps: " + corps);
             if (urgent)
@@ -251,34 +255,87 @@ namespace ExerciceRefactoring
                 Console.WriteLine("Copie à: " + emailCopie);
             }
         }
+    }
 
-        public int CalculerCongesRestants(string prenom, string nom, int annee)
+    public class CongesService
+    {
+        public int CalculerCongesRestants(Employe employe, int annee)
         {
-            Employe employe = RechercherEmploye(prenom, nom);
-
-            if (employe == null) return 0;
-
             string typeContrat = employe.TypeContrat;
             int conges = 0;
 
             if (typeContrat == "CDI")
             {
-                conges = 25; 
+                conges = 25;
             }
             else if (typeContrat == "CDD")
             {
-                conges = 20; 
+                conges = 20;
             }
             else if (typeContrat == "Stagiaire")
             {
-                conges = 0; 
+                conges = 0;
             }
             else if (typeContrat == "Freelance")
             {
-                conges = 0; 
+                conges = 0;
             }
 
             return conges;
+        }
+    }
+
+    public class GestionnaireEntreprise
+    {
+        private readonly EmployeRepository _repository = new EmployeRepository();
+        private readonly SalaireCalculateur _salaireCalculateur = new SalaireCalculateur();
+        private readonly RapportGenerateur _rapportGenerateur = new RapportGenerateur();
+        private readonly EmailService _emailService = new EmailService();
+        private readonly CongesService _congesService = new CongesService();
+
+        public void AjouterEmploye(Employe employe)
+        {
+            _repository.Ajouter(employe);
+        }
+
+        public Employe? RechercherEmploye(string prenom, string nom)
+        {
+            return _repository.Rechercher(prenom, nom);
+        }
+
+        public double CalculerSalaireNet(string prenom, string nom, int mois, int annee,
+            bool avecPrime, bool avecBonus, double tauxHoraire, int heuresSupp)
+        {
+            var employe = RechercherEmploye(prenom, nom);
+            if (employe == null) return 0;
+            return _salaireCalculateur.CalculerSalaireNet(employe, mois, annee, avecPrime, avecBonus, tauxHoraire, heuresSupp);
+        }
+
+        public string GenererRapport(string prenom, string nom, string typeRapport,
+            bool inclureAdresse, bool inclureSalaire, bool inclureConges)
+        {
+            var employe = RechercherEmploye(prenom, nom);
+            if (employe == null) return "Employé non trouvé";
+            return _rapportGenerateur.Generer(employe, typeRapport, inclureAdresse, inclureSalaire, inclureConges);
+        }
+
+        public void EnvoyerEmail(string prenom, string nom, string sujet, string corps,
+            bool avecCopie, string emailCopie, bool urgent, bool accuseReception)
+        {
+            var employe = RechercherEmploye(prenom, nom);
+            if (employe == null)
+            {
+                Console.WriteLine("Employé non trouvé");
+                return;
+            }
+            _emailService.Envoyer(employe, sujet, corps, avecCopie, emailCopie, urgent, accuseReception);
+        }
+
+        public int CalculerCongesRestants(string prenom, string nom, int annee)
+        {
+            var employe = RechercherEmploye(prenom, nom);
+            if (employe == null) return 0;
+            return _congesService.CalculerCongesRestants(employe, annee);
         }
 
         public void AfficherInfosEmploye(AutreClasse autre)
