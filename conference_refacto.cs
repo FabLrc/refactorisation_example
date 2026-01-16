@@ -206,90 +206,129 @@ namespace ExerciceRefactoring
         }
     }
 
+    public record OptionsRapport(bool InclureAdresse, bool InclureSalaire, bool InclureConges);
+
+    public interface IRapportFormatter
+    {
+        string Formater(Employe employe, OptionsRapport options);
+    }
+
+    public class PdfFormatter : IRapportFormatter
+    {
+        public string Formater(Employe employe, OptionsRapport options)
+        {
+            string rapport = "=== RAPPORT PDF ===\n";
+            rapport += $"Nom: {employe.Nom}\n";
+            rapport += $"Prénom: {employe.Prenom}\n";
+
+            if (options.InclureAdresse)
+            {
+                rapport += $"Adresse: {employe.Adresse.Rue}, {employe.Adresse.CodePostal} {employe.Adresse.Ville}\n";
+            }
+            if (options.InclureSalaire)
+            {
+                rapport += $"Salaire: {employe.Salaire}€\n";
+            }
+
+            rapport += "===================\n";
+            return rapport;
+        }
+    }
+
+    public class HtmlFormatter : IRapportFormatter
+    {
+        public string Formater(Employe employe, OptionsRapport options)
+        {
+            string rapport = "<html><body>";
+            rapport += "<h1>Rapport Employé</h1>";
+            rapport += $"<p>Nom: {employe.Nom}</p>";
+            rapport += $"<p>Prénom: {employe.Prenom}</p>";
+
+            if (options.InclureAdresse)
+            {
+                rapport += $"<p>Adresse: {employe.Adresse.Rue}, {employe.Adresse.CodePostal} {employe.Adresse.Ville}</p>";
+            }
+            if (options.InclureSalaire)
+            {
+                rapport += $"<p>Salaire: {employe.Salaire}€</p>";
+            }
+
+            rapport += "</body></html>";
+            return rapport;
+        }
+    }
+
+    public class CsvFormatter : IRapportFormatter
+    {
+        public string Formater(Employe employe, OptionsRapport options)
+        {
+            string entete = "Nom;Prénom";
+            if (options.InclureAdresse) entete += ";Rue;CP;Ville";
+            if (options.InclureSalaire) entete += ";Salaire";
+
+            string donnees = $"{employe.Nom};{employe.Prenom}";
+            if (options.InclureAdresse)
+            {
+                donnees += $";{employe.Adresse.Rue};{employe.Adresse.CodePostal};{employe.Adresse.Ville}";
+            }
+            if (options.InclureSalaire)
+            {
+                donnees += $";{employe.Salaire}";
+            }
+
+            return entete + "\n" + donnees;
+        }
+    }
+
+    public class JsonFormatter : IRapportFormatter
+    {
+        public string Formater(Employe employe, OptionsRapport options)
+        {
+            string rapport = "{\n";
+            rapport += $"  \"nom\": \"{employe.Nom}\",\n";
+            rapport += $"  \"prenom\": \"{employe.Prenom}\"";
+
+            if (options.InclureAdresse)
+            {
+                rapport += ",\n  \"adresse\": {\n";
+                rapport += $"    \"rue\": \"{employe.Adresse.Rue}\",\n";
+                rapport += $"    \"cp\": \"{employe.Adresse.CodePostal}\",\n";
+                rapport += $"    \"ville\": \"{employe.Adresse.Ville}\"\n";
+                rapport += "  }";
+            }
+            if (options.InclureSalaire)
+            {
+                rapport += $",\n  \"salaire\": {employe.Salaire}";
+            }
+
+            rapport += "\n}";
+            return rapport;
+        }
+    }
+
+    public static class RapportFormatterFactory
+    {
+        public static IRapportFormatter CreerFormatter(string typeRapport)
+        {
+            return typeRapport.ToUpper() switch
+            {
+                "PDF" => new PdfFormatter(),
+                "HTML" => new HtmlFormatter(),
+                "CSV" => new CsvFormatter(),
+                "JSON" => new JsonFormatter(),
+                _ => throw new ArgumentException($"Type de rapport inconnu: {typeRapport}")
+            };
+        }
+    }
+
     public class RapportGenerateur
     {
-        private const string RapportPdf = "PDF";
-        private const string RapportHtml = "HTML";
-        private const string RapportCsv = "CSV";
-        private const string RapportJson = "JSON";
-
         public string Generer(Employe employe, string typeRapport,
             bool inclureAdresse, bool inclureSalaire, bool inclureConges)
         {
-            string rapport = "";
-
-            if (typeRapport == RapportPdf)
-            {
-                rapport = "=== RAPPORT PDF ===\n";
-                rapport = rapport + "Nom: " + employe.Nom + "\n";
-                rapport = rapport + "Prénom: " + employe.Prenom + "\n";
-                if (inclureAdresse)
-                {
-                    rapport = rapport + "Adresse: " + employe.Adresse.Rue + ", ";
-                    rapport = rapport + employe.Adresse.CodePostal + " " + employe.Adresse.Ville + "\n";
-                }
-                if (inclureSalaire)
-                {
-                    rapport = rapport + "Salaire: " + employe.Salaire + "€\n";
-                }
-                rapport = rapport + "===================\n";
-            }
-            else if (typeRapport == RapportHtml)
-            {
-                rapport = "<html><body>";
-                rapport = rapport + "<h1>Rapport Employé</h1>";
-                rapport = rapport + "<p>Nom: " + employe.Nom + "</p>";
-                rapport = rapport + "<p>Prénom: " + employe.Prenom + "</p>";
-                if (inclureAdresse)
-                {
-                    rapport = rapport + "<p>Adresse: " + employe.Adresse.Rue + ", ";
-                    rapport = rapport + employe.Adresse.CodePostal + " " + employe.Adresse.Ville + "</p>";
-                }
-                if (inclureSalaire)
-                {
-                    rapport = rapport + "<p>Salaire: " + employe.Salaire + "€</p>";
-                }
-                rapport = rapport + "</body></html>";
-            }
-            else if (typeRapport == RapportCsv)
-            {
-                rapport = "Nom;Prénom";
-                if (inclureAdresse) rapport = rapport + ";Rue;CP;Ville";
-                if (inclureSalaire) rapport = rapport + ";Salaire";
-                rapport = rapport + "\n";
-                rapport = rapport + employe.Nom + ";" + employe.Prenom;
-                if (inclureAdresse)
-                {
-                    rapport = rapport + ";" + employe.Adresse.Rue;
-                    rapport = rapport + ";" + employe.Adresse.CodePostal;
-                    rapport = rapport + ";" + employe.Adresse.Ville;
-                }
-                if (inclureSalaire)
-                {
-                    rapport = rapport + ";" + employe.Salaire;
-                }
-            }
-            else if (typeRapport == RapportJson)
-            {
-                rapport = "{\n";
-                rapport = rapport + "  \"nom\": \"" + employe.Nom + "\",\n";
-                rapport = rapport + "  \"prenom\": \"" + employe.Prenom + "\"";
-                if (inclureAdresse)
-                {
-                    rapport = rapport + ",\n  \"adresse\": {\n";
-                    rapport = rapport + "    \"rue\": \"" + employe.Adresse.Rue + "\",\n";
-                    rapport = rapport + "    \"cp\": \"" + employe.Adresse.CodePostal + "\",\n";
-                    rapport = rapport + "    \"ville\": \"" + employe.Adresse.Ville + "\"\n";
-                    rapport = rapport + "  }";
-                }
-                if (inclureSalaire)
-                {
-                    rapport = rapport + ",\n  \"salaire\": " + employe.Salaire;
-                }
-                rapport = rapport + "\n}";
-            }
-
-            return rapport;
+            var options = new OptionsRapport(inclureAdresse, inclureSalaire, inclureConges);
+            var formatter = RapportFormatterFactory.CreerFormatter(typeRapport);
+            return formatter.Formater(employe, options);
         }
     }
 
